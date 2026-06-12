@@ -119,7 +119,15 @@ async function register({ fullName, email, phone, password }) {
     return user;
   });
 
-  await sendVerifyOtp(result);
+  // OTP email is best-effort: the user is already created+committed above, so a
+  // mail failure must NOT fail registration (it would 500 and leave a half-made
+  // account that blocks retries with "email already exists"). OTP is disabled in
+  // the current app flow anyway.
+  try {
+    await sendVerifyOtp(result);
+  } catch (e) {
+    logger.warn(`register: verify OTP email failed for ${email}: ${e.message}`);
+  }
   return { id: result.id, email: result.email, status: result.status };
 }
 
