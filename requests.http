@@ -1,0 +1,112 @@
+### TrueSkill HRMS — REST smoke requests (VS Code REST Client / IntelliJ HTTP)
+@base = http://localhost:4000/api/v1
+
+### Health
+GET {{base}}/health
+
+### Register
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "John Doe",
+  "email": "john.doe@example.com",
+  "phone": "+91 98765 43210",
+  "password": "Passw0rd@123"
+}
+
+### Verify email (paste token from the console log / email link)
+POST {{base}}/auth/verify-email
+Content-Type: application/json
+
+{ "token": "PASTE_TOKEN_HERE" }
+
+### Login (email or Employee Code)
+# @name login
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "identifier": "john.doe@example.com", "password": "Passw0rd@123" }
+
+### Me
+GET {{base}}/me
+Authorization: Bearer {{login.response.body.data.accessToken}}
+
+### Change password
+POST {{base}}/auth/change-password
+Authorization: Bearer {{login.response.body.data.accessToken}}
+Content-Type: application/json
+
+{ "oldPassword": "Passw0rd@123", "newPassword": "NewPassw0rd@123" }
+
+### Forgot password
+POST {{base}}/auth/forgot-password
+Content-Type: application/json
+
+{ "email": "john.doe@example.com" }
+
+### Refresh
+POST {{base}}/auth/refresh
+Content-Type: application/json
+
+{ "refreshToken": "{{login.response.body.data.refreshToken}}" }
+
+### ─── Phase 2 features (use the admin login token) ───
+# @name adminLogin
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "identifier": "admin@trueskill.com", "password": "Admin@1234" }
+
+@token = {{adminLogin.response.body.data.accessToken}}
+
+### Profile
+GET {{base}}/me/profile
+Authorization: Bearer {{token}}
+
+### Update profile
+PUT {{base}}/me/profile
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "fullName": "TrueSkill HR Admin", "phone": "+91 90000 00000", "address": "HQ", "pincode": "110001" }
+
+### Attendance check-in
+POST {{base}}/attendance/check-in
+Authorization: Bearer {{token}}
+
+### Leave balance
+GET {{base}}/leaves/balance
+Authorization: Bearer {{token}}
+
+### Apply leave
+POST {{base}}/leaves
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "type": "CL", "startDate": "2026-06-10", "endDate": "2026-06-11", "remarks": "Personal" }
+
+### Create a task
+POST {{base}}/tasks
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "title": "Review onboarding docs", "priority": "HIGH" }
+
+### Issue a salary slip (HR)
+POST {{base}}/salary-slips
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "userId": "PASTE_USER_ID", "month": 6, "year": 2026, "gross": 50000, "deductions": 5000 }
+
+### Publish a notice (HR)
+POST {{base}}/notices
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "title": "Office closed Friday", "body": "The office will remain closed this Friday for maintenance." }
+
+### Notifications
+GET {{base}}/notifications
+Authorization: Bearer {{token}}
