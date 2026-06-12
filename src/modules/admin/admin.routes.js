@@ -22,6 +22,11 @@ router.get('/employees/:id', asyncHandler(async (req, res) => {
   return ok(res, await service.employeeDetail(req.params.id));
 }));
 
+// Suspend / reactivate an employee. Body: { action: 'SUSPEND' | 'REACTIVATE' }
+router.put('/employees/:id/status', asyncHandler(async (req, res) => {
+  return ok(res, await service.setEmployeeStatus(req.params.id, req.body.action), 'Employee status updated');
+}));
+
 router.get('/leaves', asyncHandler(async (req, res) => {
   return ok(res, await service.pendingLeaves(req.query.status || 'APPLIED'));
 }));

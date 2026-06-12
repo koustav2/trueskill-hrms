@@ -6,11 +6,13 @@ const { Task } = require('../../db/models');
 const asyncHandler = require('../../utils/asyncHandler');
 const { ok, created } = require('../../utils/response');
 const { authenticate } = require('../../middlewares/auth');
+const { requireActive } = require('../../middlewares/active');
 const { validate } = require('../../middlewares/validate');
 const { notFound, badRequest } = require('../../utils/errors');
 const { toDateOnly } = require('../../utils/dates');
 
 router.use(authenticate);
+router.use(requireActive);
 
 const serialize = (t) => ({
   id: t.id,

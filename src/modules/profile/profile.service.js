@@ -14,6 +14,9 @@ function serialize(user, profile) {
     designation: profile?.designation || null,
     employeeCode: user.employee_code || null,
     avatarUrl: profile?.avatar_url || null,
+    // Current account status (ACTIVE/DOCS_SUBMITTED/...) so the app can gate the
+    // dashboard until HR has verified the documents.
+    status: user.status,
   };
 }
 

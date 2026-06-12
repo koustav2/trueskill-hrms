@@ -1,8 +1,9 @@
 'use strict';
 
-const { User, EmployeeProfile, Document, Leave, Tour, Advance, Attendance } = require('../../db/models');
+const { Op } = require('sequelize');
+const { User, EmployeeProfile, Document, Leave, Tour, Advance, Attendance, RefreshToken, Notification } = require('../../db/models');
 const { decrypt } = require('../../utils/crypto');
-const { notFound } = require('../../utils/errors');
+const { badRequest, notFound } = require('../../utils/errors');
 
 const withEmployee = [{ model: User, as: 'user', include: [{ model: EmployeeProfile, as: 'profile' }] }];
 const empName = (row) => row.user?.profile?.full_name || row.user?.email || 'Employee';
@@ -126,6 +127,42 @@ async function attendanceRecords({ date, userId } = {}) {
   }));
 }
 
+// Suspend (offboard) or reactivate an employee. Suspending revokes all active
+// sessions so the requireActive guard locks them out immediately everywhere.
+async function setEmployeeStatus(userId, action) {
+  if (!['SUSPEND', 'REACTIVATE'].includes(action)) throw badRequest('action must be SUSPEND or REACTIVATE');
+  const user = await User.findByPk(userId);
+  if (!user) throw notFound('Employee not found');
+  if (user.role !== 'EMPLOYEE') throw badRequest('Only employees can be suspended');
+
+  if (action === 'SUSPEND') {
+    if (user.status === 'SUSPENDED') throw badRequest('Employee is already suspended');
+    user.status = 'SUSPENDED';
+    await user.save();
+    // Kill every active session (force logout on all devices).
+    await RefreshToken.update(
+      { revoked_at: new Date() },
+      { where: { user_id: userId, revoked_at: { [Op.is]: null } } }
+    );
+    await Notification.create({
+      user_id: userId,
+      title: 'Account suspended',
+      body: 'Your account has been suspended by HR. Please contact HR for details.',
+    });
+  } else {
+    if (user.status !== 'SUSPENDED') throw badRequest('Only a suspended employee can be reactivated');
+    if (!user.employee_code) throw badRequest('Employee was never activated');
+    user.status = 'ACTIVE';
+    await user.save();
+    await Notification.create({
+      user_id: userId,
+      title: 'Account reactivated',
+      body: 'Your account has been reactivated. You can log in again.',
+    });
+  }
+  return { id: user.id, status: user.status };
+}
+
 async function counts() {
   const [pendingDocs, pendingLeavesCount, activeEmployees] = await Promise.all([
     Document.count({ where: { status: 'PENDING' } }),
@@ -135,4 +172,4 @@ async function counts() {
   return { pendingDocuments: pendingDocs, pendingLeaves: pendingLeavesCount, activeEmployees };
 }
 
-module.exports = { listEmployees, employeeDetail, pendingLeaves, pendingTours, pendingAdvances, attendanceRecords, counts };
+module.exports = { listEmployees, employeeDetail, setEmployeeStatus, pendingLeaves, pendingTours, pendingAdvances, attendanceRecords, counts };

@@ -6,10 +6,12 @@ const service = require('./leave.service');
 const asyncHandler = require('../../utils/asyncHandler');
 const { ok, created } = require('../../utils/response');
 const { authenticate } = require('../../middlewares/auth');
+const { requireActive } = require('../../middlewares/active');
 const { requireRole } = require('../../middlewares/role');
 const { validate } = require('../../middlewares/validate');
 
 router.use(authenticate);
+router.use(requireActive);
 
 router.get('/', asyncHandler(async (req, res) => {
   return ok(res, await service.listLeaves(req.user.id, req.query.status));

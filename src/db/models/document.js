@@ -16,6 +16,7 @@ module.exports = (sequelize, DataTypes) => {
       number_enc: { type: DataTypes.TEXT, allowNull: true },
       status: { type: DataTypes.ENUM(...STATUSES), allowNull: false, defaultValue: 'PENDING' },
       verified_by: { type: DataTypes.UUID, allowNull: true },
+      verified_at: { type: DataTypes.DATE, allowNull: true },
       remarks: { type: DataTypes.STRING(255), allowNull: true },
     },
     { tableName: 'documents', underscored: true }

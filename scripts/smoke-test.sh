@@ -44,6 +44,12 @@ echo "4) Authenticated /me"
 code=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $access" "$BASE/me")
 check "$code" "200" "GET /me with access token"
 
+echo "4b) Onboarding gate (server-side): employee features locked until ACTIVE"
+code=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $access" "$BASE/leaves")
+check "$code" "403" "GET /leaves before activation -> 403"
+code=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $access" "$BASE/documents")
+check "$code" "200" "GET /documents allowed during onboarding -> 200"
+
 echo "5) Refresh ROTATES the token"
 ref=$(curl -s -H 'Content-Type: application/json' -d "{\"refreshToken\":\"$refresh\"}" "$BASE/auth/refresh")
 refresh2=$(echo "$ref" | j data.refreshToken)

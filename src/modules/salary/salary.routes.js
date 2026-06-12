@@ -5,9 +5,11 @@ const service = require('./salary.service');
 const asyncHandler = require('../../utils/asyncHandler');
 const { ok, created } = require('../../utils/response');
 const { authenticate } = require('../../middlewares/auth');
+const { requireActive } = require('../../middlewares/active');
 const { requireRole } = require('../../middlewares/role');
 
 router.use(authenticate);
+router.use(requireActive);
 
 router.get('/', asyncHandler(async (req, res) => {
   return ok(res, await service.listSlips(req.user.id));

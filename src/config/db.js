@@ -25,6 +25,24 @@ const sequelize = useSqliteForTest
         idle: 5000,    // close a connection after 5s idle
         evict: 5000,   // sweep idle connections every 5s
       },
+      // The shared host's GLOBAL max_connections (150) is regularly saturated by
+      // other tenants, so a connection can be transiently refused even though our
+      // own usage is tiny. Retry on those transient errors so users don't see 500s.
+      retry: {
+        max: 4,
+        backoffBase: 300,
+        backoffExponent: 1.4,
+        match: [
+          /Too many connections/,
+          /ER_CON_COUNT_ERROR/,
+          /SequelizeConnectionError/,
+          /SequelizeConnectionRefusedError/,
+          /ECONNREFUSED/,
+          /ETIMEDOUT/,
+          /PROTOCOL_CONNECTION_LOST/,
+          /ECONNRESET/,
+        ],
+      },
     });
 
 async function connectDb() {

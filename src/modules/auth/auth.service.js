@@ -188,6 +188,7 @@ async function login({ identifier, password }) {
   if (!match) throw unauthorized('Invalid credentials');
 
   if (user.status === 'REJECTED') throw unauthorized('Account access denied');
+  if (user.status === 'SUSPENDED') throw unauthorized('Your account has been suspended. Contact HR.');
 
   user.last_login_at = new Date();
   await user.save();

@@ -7,6 +7,7 @@ const STATUSES = [
   'DOCS_SUBMITTED',   // documents uploaded, awaiting HR verification
   'ACTIVE',           // verified + employee code issued
   'REJECTED',         // application rejected
+  'SUSPENDED',        // previously active, access revoked by HR (offboarding)
 ];
 
 module.exports = (sequelize, DataTypes) => {

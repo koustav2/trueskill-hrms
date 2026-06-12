@@ -5,10 +5,12 @@ const service = require('./attendance.service');
 const asyncHandler = require('../../utils/asyncHandler');
 const { ok } = require('../../utils/response');
 const { authenticate } = require('../../middlewares/auth');
+const { requireActive } = require('../../middlewares/active');
 const { upload, publicUrl } = require('../../middlewares/upload');
 const { badRequest } = require('../../utils/errors');
 
 router.use(authenticate);
+router.use(requireActive);
 
 // Parses a coordinate from form/JSON input; returns null when absent or invalid.
 function coord(v) {

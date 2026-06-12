@@ -62,7 +62,31 @@ async function verifyDocument(documentId, verifierId, { status, remarks }) {
   doc.status = status;
   doc.remarks = remarks || null;
   doc.verified_by = verifierId;
+  doc.verified_at = new Date(); // audit: when the decision was made
   await doc.save();
+
+  // Rejection: tell the employee what to fix so they can re-upload that one doc.
+  if (status === 'REJECTED') {
+    const reason = remarks ? ` Reason: ${remarks}.` : '';
+    await Notification.create({
+      user_id: doc.user_id,
+      title: `Document rejected: ${doc.type}`,
+      body: `Your ${doc.type} document was rejected.${reason} Please re-upload it for verification.`,
+    });
+    try {
+      const owner = await User.findByPk(doc.user_id, { attributes: ['email'] });
+      if (owner) {
+        await sendMail({
+          to: owner.email,
+          subject: `Action needed: your ${doc.type} document`,
+          text: `Your ${doc.type} document was rejected.${reason} Please log in and re-upload it.`,
+          html: `<p>Your <b>${doc.type}</b> document was rejected.${reason}</p><p>Please log in and re-upload it for verification.</p>`,
+        });
+      }
+    } catch (e) {
+      logger.warn(`verifyDocument: rejection email failed for user ${doc.user_id}: ${e.message}`);
+    }
+  }
 
   // When all required docs are verified, activate the employee.
   const verifiedCount = await Document.count({

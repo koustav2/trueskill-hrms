@@ -7,11 +7,13 @@ const { encrypt, decrypt } = require('../../utils/crypto');
 const asyncHandler = require('../../utils/asyncHandler');
 const { ok, created } = require('../../utils/response');
 const { authenticate } = require('../../middlewares/auth');
+const { requireActive } = require('../../middlewares/active');
 const { requireRole } = require('../../middlewares/role');
 const { validate } = require('../../middlewares/validate');
 const { notFound, badRequest } = require('../../utils/errors');
 
 router.use(authenticate);
+router.use(requireActive);
 
 const serialize = (a) => ({
   id: a.id,
