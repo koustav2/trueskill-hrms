@@ -135,12 +135,19 @@ async function activateEmployee(userId, verifierId) {
     );
   });
 
-  await sendMail({
-    to: user.email,
-    subject: 'Your TrueSkill Employee ID',
-    text: `Your documents are verified. Your Employee ID is ${employeeCode}.`,
-    html: `<p>Your documents have been verified.</p><p>Your Employee ID is <b>${employeeCode}</b>. You can now log in with it.</p>`,
-  });
+  // Best-effort: the employee is already ACTIVE (transaction committed above), so
+  // a mail failure must NOT throw — otherwise the admin's verify request 500s even
+  // though activation succeeded, and the screen can't reload.
+  try {
+    await sendMail({
+      to: user.email,
+      subject: 'Your TrueSkill Employee ID',
+      text: `Your documents are verified. Your Employee ID is ${employeeCode}.`,
+      html: `<p>Your documents have been verified.</p><p>Your Employee ID is <b>${employeeCode}</b>. You can now log in with it.</p>`,
+    });
+  } catch (e) {
+    logger.warn(`activateEmployee: welcome email failed for ${user.email}: ${e.message}`);
+  }
   logger.info(`Activated employee ${user.email} as ${employeeCode}`);
   return { employeeCode, status: 'ACTIVE' };
 }

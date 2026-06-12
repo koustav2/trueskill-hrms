@@ -25,7 +25,15 @@ async function sendMail({ to, subject, html, text }) {
     if (text) logger.info(`[MAIL:dev] ${text}`);
     return { devLogged: true };
   }
-  return transporter.sendMail({ from: env.mail.from, to, subject, html, text });
+  // Email is best-effort: a transient/misconfigured SMTP must never bubble up and
+  // 500 the request that triggered it (registration, document verification, etc).
+  // Failures are logged so they're visible without breaking the user flow.
+  try {
+    return await transporter.sendMail({ from: env.mail.from, to, subject, html, text });
+  } catch (err) {
+    logger.warn(`sendMail failed (to=${to}, subject="${subject}"): ${err.message}`);
+    return { error: err.message };
+  }
 }
 
 module.exports = { sendMail };
