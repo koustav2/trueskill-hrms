@@ -14,7 +14,7 @@ const { notFoundHandler, errorHandler } = require('./middlewares/error');
 const app = express();
 
 // Behind a reverse proxy (nginx/ELB): trust X-Forwarded-* so rate-limit & IPs work.
-// if (env.trustProxy) app.set('trust proxy', 1);
+if (env.trustProxy) app.set('trust proxy', 1);
 
 // Security & parsing
 app.use(helmet());
