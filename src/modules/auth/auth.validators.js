@@ -4,18 +4,21 @@ const { body } = require('express-validator');
 
 const registerRules = [
   body('fullName').trim().isLength({ min: 2, max: 120 }).withMessage('Full name is required'),
-  body('email').trim().isEmail().withMessage('Valid email required').normalizeEmail(),
+  // NOTE: do NOT use normalizeEmail() — it strips Gmail dots (a.b@gmail → ab@gmail),
+  // which changes the stored email and breaks login (login only lowercases). Services
+  // lowercase consistently, so we just validate the address here.
+  body('email').trim().isEmail().withMessage('Valid email required'),
   body('phone').optional({ values: 'falsy' }).matches(/^[+0-9\- ]{7,20}$/).withMessage('Invalid phone'),
   body('password').isString().notEmpty().withMessage('Password is required'),
 ];
 
 const verifyEmailRules = [
-  body('email').trim().isEmail().withMessage('Valid email required').normalizeEmail(),
+  body('email').trim().isEmail().withMessage('Valid email required'),
   body('otp').isString().isLength({ min: 4, max: 8 }).withMessage('Enter the code from your email'),
 ];
 
 const resendOtpRules = [
-  body('email').trim().isEmail().withMessage('Valid email required').normalizeEmail(),
+  body('email').trim().isEmail().withMessage('Valid email required'),
 ];
 
 const loginRules = [
@@ -37,7 +40,7 @@ const changePasswordRules = [
 ];
 
 const forgotPasswordRules = [
-  body('email').trim().isEmail().withMessage('Valid email required').normalizeEmail(),
+  body('email').trim().isEmail().withMessage('Valid email required'),
 ];
 
 const resetPasswordRules = [
